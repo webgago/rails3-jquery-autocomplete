@@ -27,12 +27,12 @@ module Rails3JQueryAutocomplete
   #
   module ClassMethods
     def autocomplete(object, method, options = {})
-      limit = options[:limit] || 10
-      order = options[:order] || "#{method} ASC"
+      options.reverse_merge! :limit => 10, :order => "#{method} ASC", :with_scope => {:name => :where, :params => ["1=1"]}
 
       define_method("autocomplete_#{object}_#{method}") do
         if params[:term] && !params[:term].empty?
-          items = object.to_s.camelize.constantize.where(["LOWER(#{method}) LIKE LOWER(?)", "#{(options[:full] ? '%' : '')}#{params[:term].downcase}%"]).limit(limit).order(order)
+          scope = object.to_s.camelize.constantize.send(scope[:name], *scope[:params]) # apply scope, default "where 1=1" or custom
+          items = scope.where(["LOWER(#{method}) LIKE LOWER(?)", "#{(options[:full] ? '%' : '')}#{params[:term]}%"]).limit(limit).order(order)
         else
           items = {}
         end
